@@ -1,0 +1,136 @@
+<?php
+require_once('app/connection.php');
+
+class Controller
+{
+  private $db = null;
+
+  public function __construct()
+  {
+    $this->db = new Connection();
+  }
+
+  // 分析文字列保存
+  public function storeSentence()
+  {
+    $row_request = $_POST;
+    $row_request['words'] = json_decode($row_request['words'], true);
+    $request = $this->_sanitize($row_request);
+    $sentence = $request['sentence'];
+    $words = $request['words'];
+
+    try {
+      $this->db->beginTransaction();
+      $sql_for_sentence = $this->_getSqlForInsertSentence($sentence);
+      $sentence_id = $this->db->query($sql_for_sentence);
+      $sql_for_words = $this->_getSqlForInsertWords($sentence_id, $words);
+      $this->db->query($sql_for_words);
+      $this->db->commit();
+    } catch (Exception $e) {
+      $this->db->rollback();
+      echo "PDOException occured." . $e->getMessage();
+    }
+    $this->_response($sentence_id);
+  }
+
+  // 分析文字列リスト取得
+  public function getSentenceList()
+  {
+    $sql = $this->_getSqlForSelect();
+    $result = $this->db->snapshot($sql);
+    return $this->_response($result);
+  }
+
+  // 一覧取得用SQL
+  private function _getSqlForSelect()
+  {
+    $sql = <<<EOT
+      SELECT *
+      FROM sentences
+    EOT;
+    return ['sql' => $sql];
+  }
+
+  // sentences用のインサート文
+  private function _getSqlForInsertSentence($resource)
+  {
+    $sql = <<<EOT
+      INSERT INTO sentences
+      (sentence)
+      VALUES
+      (:sentence);
+    EOT;
+    $params = array(
+      [':sentence', $resource],
+    );
+    return ['sql' => $sql, 'params' => $params];
+  }
+
+  // words用のインサート文
+  private function _getSqlForInsertWords($sentence_id, $insert_data)
+  {
+    if (empty($insert_data)) {
+      return null;
+    }
+
+    // カラムリスト
+    $columns = array(
+      'sentence_id' => ':sentence_id',
+      'word_id' => ':word_id',
+      'surface_form' => ':surface_form',
+      'basic_form' => ':basic_form',
+      'conjugated_type' => ':conjugated_type',
+      'pos' => ':pos',
+      'pronunciation' => ':pronunciation',
+      'reading' => ':reading',
+    );
+    $keys = array_keys($columns);
+
+    $results = array_reduce(array_keys($insert_data), function ($acc, $idx) use ($insert_data, $columns, $keys, $sentence_id) {
+      $cur_item = $insert_data[$idx];
+      if (empty($cur_item)) {
+        return $acc;
+      }
+
+      // キーバインディング用の各キーに識別用のインデックスを配布
+      $values = array_map(function ($val) use ($idx) {
+        return $val . $idx;
+      }, $columns);
+
+      // 共通データの挿入
+      $cur_item['sentence_id'] = $sentence_id;
+      foreach ($keys as $key) {
+        $insert_key = $columns[$key] . $idx;
+        $value = !empty($cur_item[$key]) ? $cur_item[$key] : null;
+        $acc['params'][] = [$insert_key, $value];
+      }
+      $acc['values'][] = '(' . implode(', ', $values) . ')';
+      return $acc;
+    }, array('values' => [], 'params' => []));
+
+    // sql文の成型
+    $value_list = implode(', ', $results['values']);
+    $sql = <<<EOT
+      INSERT INTO words
+      (sentence_id, word_id, surface_form, basic_form, conjugated_type, pos, pronunciation, reading)
+      VALUES
+      ${value_list};
+    EOT;
+
+    return ['sql' => $sql, 'params' => $results['params']];
+  }
+
+  // 以下とりあえずここら辺に置いとく
+
+  // [xss対策]配列内を再帰的にエスケープ
+  private function _sanitize($target)
+  {
+    return filter_var($target, FILTER_CALLBACK, array('options' => fn ($t) => htmlspecialchars($t)));
+  }
+
+  // json_responseを返す
+  private function _response($data)
+  {
+    print json_encode($data, JSON_PRETTY_PRINT);
+  }
+}

@@ -1,0 +1,60 @@
+version: '3.3'
+
+services:
+  # docker run -d --rm --name vue-php-db -v vue-php-store:/var/lib/mysql --network vue-php mysql:vue-php
+  db:
+    container_name: vue-php-db
+    build:
+      context: ./db
+      dockerfile: Dockerfile
+    volumes:
+      - vue-php-store:/var/lib/mysql
+
+  # docker run -d --rm --link vue-php-db --name vue-php-adminer -p 8080:8080 --network vue-php adminer:latest
+  adminer:
+    container_name: vue-php-adminer
+    image: adminer:latest
+    ports:
+      - 8080:8080
+    depends_on:
+      - db
+
+  # docker run -dit -v "$(pwd)/src:/var/www/html" --rm --network vue-php --name vue-php-php php:vue-php
+  backend:
+    container_name: vue-php-php
+    build:
+      context: ./php
+      dockerfile: Dockerfile
+    volumes:
+      - ./php/src/:/var/www/html/
+    depends_on:
+      - db
+
+  # docker run -dit --rm --name node-vue --network vue-php -v "$(pwd)/app:/app" -p 3000:8080 node16:local
+  frontend:
+    container_name: vue-php-vue
+    build:
+      context: ./vue
+      dockerfile: Dockerfile
+    volumes:
+      - ./vue/app/:/app/
+    ports:
+      - 3000:8080
+    command: yarn serve
+    depends_on:
+      - backend
+
+  # docker run -d -p 80:80 --network vue-php --rm --name vue-php-nginx nginx:vue-php
+  nginx:
+    container_name: vue-php-nginx
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    ports:
+      - 80:80
+    depends_on:
+      - backend
+      - db
+      
+volumes:
+  vue-php-store:

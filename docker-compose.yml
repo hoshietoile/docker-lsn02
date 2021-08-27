@@ -38,9 +38,10 @@ services:
       dockerfile: Dockerfile
     volumes:
       - ./vue/app/:/app/
+      - /app/app/node_modules
     ports:
       - 3000:8080
-    command: yarn serve
+    # command: yarn serve
     depends_on:
       - backend
 

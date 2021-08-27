@@ -36,7 +36,7 @@ class Connection
       $stmt->bindValue($prm[0], $prm[1]);
     }
     $stmt->execute();
-    $result = $stmt->fetchAll();
+    $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
     return empty($result) ? null : $result;
   }
 

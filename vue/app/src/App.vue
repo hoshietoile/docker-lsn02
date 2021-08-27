@@ -5,22 +5,28 @@
     .btns
       button.btn.btn-primary(@click="togglePage(1)") 分析画面
       button.btn.btn-primary.mx-1(@click="togglePage(2)") 分析履歴一覧
+      button.btn.btn-primary(@click="togglePage(3)") 集計結果
   main
-    Transition(name="shift", mode="out-in")
-      Analyse(
-        v-if="page === 1",
-        ref="analysePage",
-        :cache="cache",
-        @startLoading="startLoading",
-        @endLoading="endLoading",
-        @clearCache="clearCache"
-      )
-      List(
-        v-else,
-        @startLoading="startLoading",
-        @endLoading="endLoading",
-        @acceptRow="acceptTextArea"
-      )
+    //- TransitionGroup(name="shift", tag="li" mode="out-in")
+    Analyse(
+      v-if="page === 1",
+      ref="analysePage",
+      :cache="cache",
+      @startLoading="startLoading",
+      @endLoading="endLoading",
+      @clearCache="clearCache"
+    )
+    List(
+      v-if="page === 2",
+      @startLoading="startLoading",
+      @endLoading="endLoading",
+      @acceptRow="acceptTextArea"
+    )
+    Chart(
+      v-if="page === 3"
+      @startLoading="startLoading",
+      @endLoading="endLoading",
+    )
     Loading(v-if="loading")
 </template>
 
@@ -31,12 +37,14 @@ import { ref } from "vue";
 import Loading from "@/components/Loading";
 import Analyse from "@/components/Analyse";
 import List from "@/components/List";
+import Chart from "@/components/Chart"
 
 export default {
   name: "App",
   components: {
     Analyse,
     List,
+    Chart,
     Loading,
   },
   setup() {
@@ -49,7 +57,7 @@ export default {
     const endLoading = () => (loading.value = false);
     const clearCache = () => (cache.value = null);
     const togglePage = (to) => {
-      if (to === 2) {
+      if (page.value === 1) {
         cache.value = analysePage.value.text;
       }
       page.value = to;

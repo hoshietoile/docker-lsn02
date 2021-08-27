@@ -41,7 +41,68 @@ class Controller
     return $this->_response($result);
   }
 
-  // 一覧取得用SQL
+  // ワード一覧取得
+  public function getWordList()
+  {
+    $request = $this->_sanitize($_POST);
+    $sql = $this->_getSqlForWords($request);
+    $result = $this->db->snapshot($sql);
+    return $this->_response($result);
+  }
+
+  // 品詞一覧取得
+  public function getPosList()
+  {
+    $request = $this->_sanitize($_POST);
+    $sql = $this->_getSqlForPos($request);
+    $result = $this->db->snapshot($sql);
+    return $this->_response($result);
+  }
+
+  // wordsフィルタリング用where句生成関数
+  private function _getWordWhereClause($req)
+  {
+    $whereClause = [];
+    $whereParams = [];
+    $whereQuery = "";
+    if (!empty($req['surface'])) {
+      $value = $req['surface'];
+      $whereClause[] = "surface_form like :surface";
+      $whereParams[] = [':surface', "%${value}%"];
+    }
+    if (!empty($req['pos'])) {
+      $value = $req['pos'];
+      $whereClause[] = "pos = :pos";
+      $whereParams[] = [':pos', $value];
+    }
+    if (!empty($req['pronunciation'])) {
+      $value = $req['pronunciation'];
+      $whereClause[] = "pronunciation = :pronunciation";
+      $whereParams[] = [':pronunciation', $value];
+    }
+    if (count($whereClause) > 0 && count($whereParams) > 0) {
+      $whereQuery = "WHERE " . implode(" AND ", $whereClause);
+    }
+    return [$whereQuery, $whereParams];
+  }
+
+  // ワード一覧取得用SQL
+  private function _getSqlForWords($req)
+  {
+    list($whereQuery, $whereParams) = $this->_getWordWhereClause($req);
+
+    $sql = <<<EOT
+      SELECT surface_form, count(1) as cnt
+      FROM words
+      ${whereQuery}
+      group by surface_form
+      order by cnt desc
+      limit 10
+    EOT;
+    return ['sql' => $sql, 'params' => $whereParams];
+  }
+
+  // sentences一覧取得用SQL
   private function _getSqlForSelect()
   {
     $sql = <<<EOT
@@ -49,6 +110,21 @@ class Controller
       FROM sentences
     EOT;
     return ['sql' => $sql];
+  }
+
+  // 品詞一覧取得用SQL
+  private function _getSqlForPos($req)
+  {
+    list($whereQuery, $whereParams) = $this->_getWordWhereClause($req);
+
+    $sql = <<<EOT
+      SELECT pos, COUNT(1) AS cnt
+      FROM words
+      ${whereQuery}
+      GROUP BY pos
+      ORDER BY cnt DESC
+    EOT;
+    return ['sql' => $sql, 'params' => $whereParams];
   }
 
   // sentences用のインサート文

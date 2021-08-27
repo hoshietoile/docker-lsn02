@@ -8,3 +8,5 @@ run npm i
 
 run npm i -g @vue/cli
 
+cmd ['yarn', 'serve']
+

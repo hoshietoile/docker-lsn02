@@ -1,11 +1,10 @@
 <template lang="pug">
 .form-control(:class="isInvalid ? 'invalid' : ''")
-  label.label-bg(:for="id") {{ label }}
-  textarea.custom-input(
+  label(:for="id") {{ label }}
+  input.custom-input(
     :id="id",
     :value="modelValue",
-    @input="$emit('update:modelValue', $event.target.value)",
-    rows="5"
+    @input="$emit('update:modelValue', $event.target.value)"
   )
   .invalid-feedback {{ feedback }}
 </template>
@@ -13,7 +12,7 @@
 <script>
 import { toRefs, computed } from "vue";
 export default {
-  name: "FormText",
+  name: "FormInput",
   props: {
     id: {
       type: String,

@@ -1,6 +1,6 @@
 <template lang="pug">
 .list
-  Card
+  Card.mx-1
     p.title 分析履歴一覧
     .my-1
       TransitionGroup.custom-list(name="list", tag="ul")
@@ -14,11 +14,15 @@ import { reactive, toRefs, onMounted } from "vue";
 import { api } from "@/utils";
 // components
 import Card from "@/components/Card";
+import FormInput from "@/components/FormInput";
+import FormSelect from "@/components/FormSelect";
 
 export default {
   name: "List",
   components: {
     Card,
+    FormInput,
+    FormSelect,
   },
   emits: ["startLoading", "endLoading", "acceptRow", "togglePage"],
   setup(_, ctxt) {
@@ -36,7 +40,7 @@ export default {
           list.data.push(...result.data);
         }
       } catch (e) {
-        console.err(e);
+        console.error(e);
       } finally {
         ctxt.emit("endLoading");
       }

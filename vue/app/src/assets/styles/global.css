@@ -106,7 +106,7 @@ header {
   box-shadow: 0 0 8px rgba(0, 0, 0, 0.3);
   display: grid;
   grid-template: "title spacer btns ..." 60px
-    /  260px 1fr 200px 16px;
+    /  260px 1fr 300px 16px;
 }
 
 header h1 {
@@ -189,6 +189,10 @@ main {
   border-bottom: 1px solid #ccc;
 }
 
+.flex .title {
+  flex-grow: 1;
+}
+
 input.custom-input:active,
 input.custom-input:focus,
 textarea.custom-input:active,
@@ -223,7 +227,7 @@ select.custom-input {
   margin: 8px 0;
 }
 
-.form-control label {
+.form-control label.label-bg {
   padding: 4px 8px 2px 8px;
   color: white;
   background-color: rgb(247, 149, 8);
@@ -451,4 +455,50 @@ li.token-container {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.filter {
+  z-index: 100;
+  width: 32px;
+  height: 32px;
+  position: relative;
+}
+.filter__adder {
+  width: 72px;
+  height: 32px;
+  display: inline-block;
+  position: relative;
+  background-color: rgb(30, 80, 156);
+  box-shadow: inset 2px 0px 8px rgba(0, 30, 106, 0.8);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color .1s ease,
+              height .5s ease,
+              width .5s ease;
+  top: 0;
+  right: 0;
+  position: absolute;
+  overflow: hidden;
+}
+.filter__adder span {
+  display: inline-block;
+  width: 100%;
+  line-height: 32px;
+  text-align: center;
+  font-weight: 600;
+  color: white;
+}
+
+/* 内部要素のジャンプをなくす */
+.filter__adder--wrapper {
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.filter__adder.active {
+  background-color: white;
+  border-radius: 4px;
+  box-shadow: 0 0 8px 8px rgba(150, 150, 150, 0.3);
+  padding: 8px 16px;
+  cursor: default;
 }
